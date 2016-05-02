@@ -27,7 +27,9 @@ definition(
 preferences {
 	section("Settings") {
 		input "masterSwitchLevel", "capability.switchLevel", title: "Master Switch", required: true, multiple: false
-		input "slaveSwitches", "capability.switchLevel", title: "Slave Switches", required: true, multiple: true
+		input "slaveSwitchLevels", "capability.switchLevel", title: "Slave Switches", required: true, multiple: true
+		input "masterSwitch", "capability.switch", title: "Master Switch", required: true, multiple: false
+		input "slaveSwitches", "capability.switch", title: "Slave Switches", required: true, multiple: true
 	}
 }
 
@@ -45,13 +47,27 @@ def updated() {
 }
 
 def initialize() {
-	subscribe(masterSwitchLevel,"level",masterSwitchEvent)
+	subscribe(masterSwitchLevel,"level",masterSwitchLevelEvent)
+	subscribe(masterSwitch,"switch",masterSwitchEvent)
+}
+
+def masterSwitchLevelEvent(evt) {
+	slaveSwitchLevels.each { switchLevel -> 
+    	log.debug "Setting $switchLevel.displayName to $evt.value"
+    	switchLevel.setLevel(evt.value)
+    }
 }
 
 def masterSwitchEvent(evt) {
-	log.debug "Master Switch Event Occured: $evt.value"
-	slaveSwitches.each { switchLevel -> 
-    	log.debug "Setting the Value for $switchLevel.name"
-    	switchLevel.setLevel(evt.value)
+	slaveSwitches.each { aSwitch -> 
+        //aSwitch.on()
+    	log.debug "Turning $evt.value $aSwitch.displayName"
+        
+        if ("on" == evt.value && "on" != aSwitch.currentSwitch) {
+    		aSwitch.on()
+        }
+        else if (evt.value == "off" && "off" != aSwitch.currentSwitch) {
+    		aSwitch.off()
+        }
     }
 }
