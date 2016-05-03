@@ -45,14 +45,24 @@ def updated() {
 }
 
 def initialize() {
-	schedule(time1, timeEvent)
+	state.runNumer = 0
+	state.hue = 0
+	//schedule("* 0/1 * * * ?", timeEvent)
+    runIn(1,timeEvent)
 }
 
 def timeEvent(evt) {
-	lights.each { light ->
-    	light.setHue(80)
+    def tempHue = 0
+    	
+    lights.each { light ->
+        if ("off" == light.switch) {
+            light.on()
+        }
         light.setSaturation(100)
         light.setLevel(100)
-        light.on()
+        log.debug "Setting Hue to ${state.hue}"
+        light.setHue(state.hue)
+		state.hue = (state.hue + 10) % 100
     }
+    runIn(2,timeEvent)
 }
